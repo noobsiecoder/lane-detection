@@ -29,20 +29,11 @@ TEST(ImageProcessing, CHECK_FILE)
 TEST(ImageProcessing, GRAYSCALE)
 {
     //? Intent:
-    //? Check if grayscale object is loaded
-    ImageProcessor image("./data/video/video1.mp4");
-    image.loadVideo();
-    ASSERT_EQ(image.grayscaleVideo(), 1); // PASS
-
-    //? Intent:
-    //? Check if grayscaleVideo() returns 0 when grayscale_ is empty
-    // ASSERT_NE(image.grayscaleVideo(), 1); // PASS
-
-    //? Intent:
     //? Check if grayscale frames have only one channel (intensity)
-    //! DEV PURPOSE ONLY, COMMENT LATER
-    std::vector<cv::Mat> grayscaleFrames = image.getGrayscaleFrames();
-    for (const auto &frame : grayscaleFrames)
+    ImageProcessor image("./data/video/video1.mp4");
+    std::vector<cv::Mat> frames_ = image.loadVideoToVector();
+    std::vector<cv::Mat> grayscale_frames_ = image.grayscale(frames_);
+    for (const auto &frame : grayscale_frames_)
     {
         ASSERT_TRUE(isGrayscale(frame));
     } // PASS
@@ -50,26 +41,10 @@ TEST(ImageProcessing, GRAYSCALE)
     //? Intent:
     //? Check if captured frames in RGB (3 channels) are not in grayscale
     //! DEV PURPOSE ONLY, COMMENT LATER
-    cv::VideoCapture capturedFrames = image.getCapturedFrames();
-    cv::Mat frame;
-    while (capturedFrames.read(frame))
+    for (const auto &frame : frames_)
     {
         ASSERT_FALSE(isGrayscale(frame));
     } // PASS
-}
-
-TEST(ImageProcessing, MEDIAN_BLUR)
-{
-    //? Intent:
-    //? Check if grayscale object is loaded
-    ImageProcessor image("./data/video/video1.mp4");
-    image.loadVideo();
-    image.grayscaleVideo();
-    ASSERT_EQ(image.medianFilter(), 1); // PASS
-
-    //? Intent:
-    //? Check if medianFilter() returns 0 when grayscale_ is empty
-    // ASSERT_NE(image.grayscaleVideo(), 1); // PASS
 }
 
 int main(int argc, char **argv)

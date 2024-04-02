@@ -22,7 +22,7 @@ include_directories(include)
 
 # Add executable for tests
 add_executable(ImageProcessTest tests/unit_test.cc src/cpp/image_processor.cc src/cpp/custom_exception.cc)
-add_executable(main src/cpp/image_processor.cc src/cpp/custom_exception.cc src/cpp/main.cc)
+add_executable(main src/cpp/image_processor.cc src/cpp/lane_detection.cc src/cpp/custom_exception.cc src/cpp/main.cc)
 
 # Link Google Test and the test executable
 target_link_libraries(ImageProcessTest GTest::GTest GTest::Main ${OpenCV_LIBS})

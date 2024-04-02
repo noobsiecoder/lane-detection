@@ -2,7 +2,7 @@
 #include <custom_exception.h>
 
 // constructor
-ImageProcessor::ImageProcessor(const std::string &file) : file_(file) {}
+ImageProcessor::ImageProcessor(const std::string &file) : file_(file), error_("Error: ") {}
 
 // destructor
 ImageProcessor::~ImageProcessor()
@@ -43,120 +43,162 @@ int ImageProcessor::loadVideo()
     }
 }
 
-// convert video object to grayscale
-int ImageProcessor::grayscaleVideo()
+// load video to std::vector
+std::vector<cv::Mat> ImageProcessor::loadVideoToVector()
 {
-    cv::Mat frame;
-    while (capture_.read(frame))
+    if (!fileExists())
     {
-        cv::Mat grayFrame;
-        cv::cvtColor(frame, grayFrame, cv::COLOR_BGR2GRAY);
+        error_ += "\'" + file_ + "\' not found!";
+        throw FileNotFoundException(error_);
+    }
+    else
+    {
+        capture_.open(file_); // load file into object
+        if (!capture_.isOpened())
+        {
+            error_ += "Capture object is open!";
+            throw CaptureOpenedException(error_);
+        }
 
-        grayscale_.push_back(grayFrame);
+        std::vector<cv::Mat> frames_;
+        cv::Mat frame;
+        while (capture_.read(frame))
+        {
+            frames_.push_back(frame.clone());
+        }
+
+        if (frames_.empty())
+        {
+            error_ += "Capture object is empty!";
+            throw CaptureEmptyException(error_);
+        }
+
+        return frames_;
+    }
+}
+
+// convert video object to grayscale
+std::vector<cv::Mat> ImageProcessor::grayscale(const std::vector<cv::Mat> &frames)
+{
+    std::vector<cv::Mat> frames_;
+    for (const auto &frame : frames)
+    {
+        cv::Mat grayscaleFrame;
+        cv::cvtColor(frame, grayscaleFrame, cv::COLOR_BGR2GRAY);
+
+        frames_.push_back(grayscaleFrame.clone());
     }
 
-    if (grayscale_.empty())
+    if (frames_.empty())
     {
-        return FAILURE;
+        error_ += "Capture object is empty!";
+        throw CaptureEmptyException(error_);
     }
 
-    return SUCCESS;
+    return frames_;
 }
 
 // apply median filter to smooth image
-int ImageProcessor::medianFilter(const int &kernelSize)
+std::vector<cv::Mat> ImageProcessor::medianFilter(const std::vector<cv::Mat> &frames, const int &kernelSize)
 {
-    for (const auto &grayscaleFrame : grayscale_)
+    std::vector<cv::Mat> frames_;
+    for (const auto &frame : frames)
     {
-        cv::Mat frame;
-        cv::medianBlur(grayscaleFrame, frame, kernelSize);
+        cv::Mat blurFrame;
+        cv::medianBlur(frame, blurFrame, kernelSize);
 
-        medianblur_.push_back(frame);
+        frames_.push_back(blurFrame);
     }
 
-    if (medianblur_.empty())
+    if (frames_.empty())
     {
-        return FAILURE;
+        error_ += "Capture object is empty!";
+        throw CaptureEmptyException(error_);
     }
 
-    return SUCCESS;
+    return frames_;
 }
 
 // apply gaussian noise (remove salt and pepper noise)
-int ImageProcessor::gaussianFilter(const cv::Size &kernelSize, const double &deviation)
+std::vector<cv::Mat> ImageProcessor::gaussianFilter(const std::vector<cv::Mat> &frames, const cv::Size &kernelSize, const double &deviation)
 {
-    for (const auto &medianblurFrame : medianblur_)
+    std::vector<cv::Mat> frames_;
+    for (const auto &frame : frames)
     {
-        cv::Mat frame;
-        cv::GaussianBlur(medianblurFrame, frame, kernelSize, deviation);
+        cv::Mat gaussianFrame;
+        cv::GaussianBlur(frame, gaussianFrame, kernelSize, deviation);
 
-        gaussianblur_.push_back(frame);
+        frames_.push_back(gaussianFrame);
     }
 
-    if (gaussianblur_.empty())
+    if (frames_.empty())
     {
-        return FAILURE;
+        error_ += "Capture object is empty!";
+        throw CaptureEmptyException(error_);
     }
 
-    return SUCCESS;
+    return frames_;
 }
 
 // apply histogram equalization to imporve contrast and brightness
-int ImageProcessor::histogramFilter()
+std::vector<cv::Mat> ImageProcessor::histogramFilter(const std::vector<cv::Mat> &frames)
 {
-    for (const auto &gaussianblurFrame : gaussianblur_)
+    std::vector<cv::Mat> frames_;
+    for (const auto &frame : frames)
     {
-        cv::Mat frame;
-        cv::equalizeHist(gaussianblurFrame, frame);
+        cv::Mat histogramEqFrame;
+        cv::equalizeHist(frame, histogramEqFrame);
 
-        histogrameq_.push_back(frame);
+        frames_.push_back(histogramEqFrame);
     }
 
-    if (histogrameq_.empty())
+    if (frames_.empty())
     {
-        return FAILURE;
+        error_ += "Capture object is empty!";
+        throw CaptureEmptyException(error_);
     }
 
-    return SUCCESS;
+    return frames_;
 }
 
-// apply dilation and erosion filter
-int ImageProcessor::miscellaneousFilters(const int &kernelSize)
+// apply dilation filter
+std::vector<cv::Mat> ImageProcessor::dilate(const std::vector<cv::Mat> &frames, const int &kernelSize)
 {
-    for (const auto &histogramEqualizationFrames : histogrameq_)
+    std::vector<cv::Mat> frames_;
+    for (const auto &frame : frames)
     {
-        cv::Mat dilatedFrame;
-        cv::Mat frame;
+        cv::Mat dilateFrame;
+        cv::dilate(frame, dilateFrame, kernelSize);
 
-        cv::dilate(histogramEqualizationFrames, dilatedFrame, kernelSize);
-        cv::erode(dilatedFrame, frame, kernelSize);
-
-        miscfilter_.push_back(frame);
+        frames_.push_back(dilateFrame);
     }
 
-    if (miscfilter_.empty())
+    if (frames_.empty())
     {
-        return FAILURE;
+        error_ += "Capture object is empty!";
+        throw CaptureEmptyException(error_);
     }
 
-    return SUCCESS;
+    return frames_;
 }
 
-// only for development purposes
-//! DEV USE ONLY, DELETE LATER
-std::vector<cv::Mat> ImageProcessor::getGrayscaleFrames() const { return grayscale_; }
+// apply erosion filter
+std::vector<cv::Mat> ImageProcessor::erosion(const std::vector<cv::Mat> &frames, const int &kernelSize)
+{
+    std::vector<cv::Mat> frames_;
+    for (const auto &frame : frames)
+    {
+        cv::Mat erosionFrame;
+        cv::erode(frame, erosionFrame, kernelSize);
 
-//! DEV USE ONLY, DELETE LATER
-cv::VideoCapture ImageProcessor::getCapturedFrames() const { return capture_; }
+        frames_.push_back(erosionFrame);
+    }
 
-//! DEV USE ONLY, DELETE LATER
-std::vector<cv::Mat> ImageProcessor::getMedianBlurFrames() const { return medianblur_; }
+    if (frames_.empty())
+    {
+        error_ += "Capture object is empty!";
+        throw CaptureEmptyException(error_);
+    }
 
-//! DEV USE ONLY, DELETE LATER
-std::vector<cv::Mat> ImageProcessor::getGaussianBlurFrames() const { return gaussianblur_; }
-
-//! DEV USE ONLY, DELETE LATER
-std::vector<cv::Mat> ImageProcessor::getHistogramFilteredFrames() const { return histogrameq_; }
-
-//! DEV USE ONLY, DELETE LATER
-std::vector<cv::Mat> ImageProcessor::getMiscellaneousFilteredFrames() const { return miscfilter_; }
+    return frames_;
+}

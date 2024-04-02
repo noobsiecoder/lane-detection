@@ -19,45 +19,38 @@ public:
     // load video object
     int loadVideo();
 
+    // load video object to a vector
+    std::vector<cv::Mat> loadVideoToVector();
+
     // convert video object to grayscale
-    int grayscaleVideo();
+    std::vector<cv::Mat> grayscale(const std::vector<cv::Mat> &frames);
 
     // apply median filter to smooth image
-    int medianFilter(const int &kernelSize = 5);
+    std::vector<cv::Mat> medianFilter(const std::vector<cv::Mat> &frames, const int &kernelSize = 5);
 
     // apply gaussian noise (remove salt and pepper noise)
-    int gaussianFilter(const cv::Size &kernelSize = cv::Size(5, 5), const double &deviation = 2.50);
+    std::vector<cv::Mat> gaussianFilter(const std::vector<cv::Mat> &frames, const cv::Size &kernelSize = cv::Size(5, 5), const double &deviation = 2.50);
 
     // apply histogram equalization to imporve contrast and brightness
-    int histogramFilter();
+    std::vector<cv::Mat> histogramFilter(const std::vector<cv::Mat> &frames);
 
-    // apply dilation and erosion filter
-    int miscellaneousFilters(const int &kernelSize = 3);
+    // dilate filter
+    std::vector<cv::Mat> dilate(const std::vector<cv::Mat> &frames, const int &kernelSize = 3);
+
+    // erosion filter
+    std::vector<cv::Mat> erosion(const std::vector<cv::Mat> &frames, const int &kernelSize = 3);
 
     // filter the unnecessary area from the frame
-    void regionOfInterest();
-
-    // only for development purposes
-    std::vector<cv::Mat> getGrayscaleFrames() const;             //! DEV USE ONLY, DELETE LATER
-    cv::VideoCapture getCapturedFrames() const;                  //! DEV USE ONLY, DELETE LATER
-    std::vector<cv::Mat> getMedianBlurFrames() const;            //! DEV USE ONLY, DELETE LATER
-    std::vector<cv::Mat> getGaussianBlurFrames() const;          //! DEV USE ONLY, DELETE LATER
-    std::vector<cv::Mat> getHistogramFilteredFrames() const;     //! DEV USE ONLY, DELETE LATER
-    std::vector<cv::Mat> getMiscellaneousFilteredFrames() const; //! DEV USE ONLY, DELETE LATER
+    std::vector<cv::Mat> regionOfInterest(const std::vector<cv::Mat> &frames);
 
 private:
     // const values for returning status
     const int FAILURE = 0;
     const int SUCCESS = 1;
 
-    cv::VideoCapture capture_;          // cv::Video object
-    std::string file_;                  // file
-    std::vector<cv::Mat> frames_;       // resultant frame
-    std::vector<cv::Mat> grayscale_;    // grayscale frames
-    std::vector<cv::Mat> medianblur_;   // frames with median blur
-    std::vector<cv::Mat> gaussianblur_; // frames with gaussian blur + median blur
-    std::vector<cv::Mat> histogrameq_;  // frames with gaussian blur + median blur + histogram equalization
-    std::vector<cv::Mat> miscfilter_;   // frames with gaussian blur + median blur + histogram equalization + dilate + erosion
+    cv::VideoCapture capture_; // cv::Video object
+    std::string file_;         // file
+    std::string error_;        // Error message
 
     // check file exists
     bool fileExists() const;
