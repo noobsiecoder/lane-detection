@@ -14,16 +14,18 @@ find_package(OpenCV REQUIRED)
 # Include directories
 include_directories(include)
 
-# Add executable
-# add_executable(opencv_test src/cpp/opencv_test.cc)
-
-# Link OpenCV libraries
-# target_link_libraries(opencv_test ${OpenCV_LIBS})
-
 # Add executable for tests
-add_executable(ImageProcessTest tests/unit_test.cc src/cpp/image_processor.cc src/cpp/custom_exception.cc)
-add_executable(main src/cpp/image_processor.cc src/cpp/lane_detection.cc src/cpp/custom_exception.cc src/cpp/main.cc)
+add_executable(main 
+    src/custom_exception.cc 
+    src/image/capture.cc src/image/filter.cc
+    src/image/canny.cc src/image/hough.cc 
+    src/main.cc)
+add_executable(test 
+    src/custom_exception.cc 
+    src/image/capture.cc src/image/filter.cc 
+    src/image/canny.cc src/image/hough.cc 
+    tests/unit_test.cc)
 
 # Link Google Test and the test executable
-target_link_libraries(ImageProcessTest GTest::GTest GTest::Main ${OpenCV_LIBS})
 target_link_libraries(main ${OpenCV_LIBS})
+target_link_libraries(test GTest::GTest GTest::Main ${OpenCV_LIBS})
