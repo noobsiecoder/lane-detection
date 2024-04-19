@@ -1,10 +1,33 @@
+'''
+MIT License
+
+Copyright (c) 2024 Abhishek Sriram
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+'''
+
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
-import glob
 import os
 
-
+# path containing all KITTI *.png dataset
 PATHS = ["./data/drive_0001_sync/image_02/data/",
          "./data/drive_0002_sync/image_02/data/",
          "./data/drive_0011_sync/image_02/data/",
@@ -18,14 +41,24 @@ PATHS = ["./data/drive_0001_sync/image_02/data/",
 
 
 def capture_image(path):
+    '''
+    Capture into MatLike object
+    '''
     return cv.imread(path)
 
 
 def grayscale(img):
+    '''
+    Convert image color to grayscale
+    Three channel to one channel
+    '''
     return cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
 
 def roi(img: cv.typing.MatLike):
+    '''
+    Get the region of interest from the image
+    '''
     # Define the region of interest (ROI) coordinates (x, y, width, height)
     x = 400  # x-coordinate of the top-left corner of the ROI
     y = 200   # y-coordinate of the top-left corner of the ROI
@@ -36,14 +69,12 @@ def roi(img: cv.typing.MatLike):
     return img[y:y+height, x:x+width]
 
 
-def dewarp(img, matrix, old_points, new_points):
-    inv_matrix = np.linalg.inv(matrix)
-    # print(old_points[3,0])
-    return cv.warpPerspective(img, inv_matrix, (int(old_points[3, 0]), int(old_points[3, 1])))
-
-
 def planar_warp(img):
-    # print(img.shape)
+    '''
+    Perform perspective projection on the original image
+    Obtain a bird's eye view
+    '''
+    # plot points on the image
     # cv.circle(img, (130, 1), 5, (255, 0, 0), 5)
     # cv.circle(img, (250, 1), 5, (0, 255, 0), 5)
     # cv.circle(img, (0, img.shape[0]), 5, (0, 0, 255), 5)
@@ -57,34 +88,56 @@ def planar_warp(img):
 
 
 def gaussian_blur(img):
+    '''
+    Apply gaussian blur on the image
+    Visit: https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
+    '''
     return cv.GaussianBlur(img, (5, 5), 10.0)
 
 
 def bilateral_blur(img):
+    '''
+    Apply bilateral blur on the image
+    Visit: https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
+    '''
     return cv.bilateralFilter(img, 2, 0.5, 10)
 
 
 def dilate(img):
+    '''
+    Dilate image: Increase white region (border)
+    Visit: https://docs.opencv.org/4.x/d9/d61/tutorial_py_morphological_ops.html
+    '''
     # Morphological operations (dilation)
     kernel = np.ones((5, 5), np.uint8)
     return cv.dilate(img, kernel, iterations=1)
 
 
 def erode(img):
+    '''
+    Erode image: Decrease white region (border)
+    Visit: https://docs.opencv.org/4.x/d9/d61/tutorial_py_morphological_ops.html
+    '''
     # Morphological operations (dilation)
     kernel = np.ones((5, 5), np.uint8)
     return cv.erode(img, kernel, iterations=1)
 
 
 def canny(img):
+    '''
+    Perform canny edge detection
+    Visit: https://docs.opencv.org/4.x/da/d22/tutorial_py_canny.html
+    '''
     return cv.Canny(img, 100, 150)
 
 
 def hough_lines(o_img, img, matrix):
+    '''
+    Obtain probablisitic hough lines
+    Visit: https://docs.opencv.org/3.4/d6/d10/tutorial_py_houghlines.html
+    '''
     # Perform Hough Line Transform
-    # lines = cv.HoughLines(img, 1, np.pi / 180, 255, np.array([]), min_theta=0.0, max_theta=np.pi / 2)
     inv_matrix = np.linalg.inv(matrix)
-    count = 0
     lines = cv.HoughLinesP(img, 1, np.pi / 180, 20,
                            minLineLength=100, maxLineGap=90)
 
@@ -121,20 +174,15 @@ def hough_lines(o_img, img, matrix):
         x1, y1, x2, y2 = line
         # print(x1[0], y1)
         cv.line(o_img, (x1[0], y1[0]), (x2[0], y2[0]),
-                (0, 0, 255), 6)  # Example: Draw a line
-
-    # for line in lines:
-    #     # original_points = cv.perspectiveTransform(np.float32(line[0].reshape(-1, 1, 2)), np.float32(inv_matrix))
-    #     # x,y = original_points
-    #     x1,y1,x2,y2 = line[0]
-    #     cv.line(o_img,(x1, y1), (x2, y2),(255, 0,0),10)
-    #     # cv.line(o_img,(x1,y1),(x2,y2),(255, 0,0),10)
-    #     count += 1
+                (0, 0, 255), 6)
 
     return o_img
 
 
 def plot_graph(img):
+    '''
+    Plotting graph of nine different images
+    '''
     for i in range(9):
         plt.subplot(3, 3, i + 1)
         plt.imshow(img[i])
@@ -163,7 +211,6 @@ if __name__ == "__main__":
         imgs.append(houghL_img)
 
     # Get the dimensions of the first image
-    # print(imgs[0])
     height, width, channels = imgs[0].shape
 
     # Define the codec and create VideoWriter object
