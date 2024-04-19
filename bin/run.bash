@@ -15,7 +15,7 @@ else
                 echo "directory created: $OUTPUT" || echo "directory not created: $OUTPUT"
             echo
         fi
-        ./build/main --file=data/drive_00"$file"_sync/image_02/data --output="$OUTPUT"/drive_00"$file"_sync_"$OUTPUT"
+        ./build/Main --file=data/drive_00"$file"_sync/image_02/data --output="$OUTPUT"/drive_00"$file"_sync_"$OUTPUT"
     done
 fi
 
