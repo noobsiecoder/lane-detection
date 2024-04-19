@@ -21,29 +21,21 @@
 // SOFTWARE.
 
 /// @file
-/// @brief This file contains all the custom exceptions declarations
+/// @brief This file contains all the custom type implementations
 
-#include <custom_exception.h>
+#ifndef CUSTOM_TYPES_H
+#define CUSTOM_TYPES_H
 
-/// @brief Raise custom exception error
-/// @return
-const char *CustomException::what() const noexcept
-{
-    return message_.c_str();
-}
+#include <vector>
+#include <opencv2/core/mat.hpp>
 
-/// @brief Raise an error when required arguments are not passed
-/// @param message error message
-ArgsNotFoundException::ArgsNotFoundException(const std::string &message) : CustomException(message) {}
+/// @brief type definition for an array of images
+typedef std::vector<cv::Mat> ImageSequence;
 
-/// @brief Raise an error when path given does not exist
-/// @param message error message
-PathNotFoundException::PathNotFoundException(const std::string &message) : CustomException(message) {}
+/// @brief type definition for an array of points in the coordinate space
+typedef std::vector<cv::Vec4i> CoordinatePoints;
 
-/// @brief Raise an error when capture object is empty
-/// @param message error message
-CaptureEmptyException::CaptureEmptyException(const std::string &message) : CustomException(message) {}
+/// @brief type definition for an array of points to preserve the region of interest
+typedef std::vector<cv::Point> ROIPoints;
 
-/// @brief Raise an error when capture object is already opened
-/// @param message error message
-CaptureOpenedException::CaptureOpenedException(const std::string &message) : CustomException(message) {}
+#endif // CUSTOM_TYPES_H

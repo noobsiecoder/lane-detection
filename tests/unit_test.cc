@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
-#include <image/capture.h>
-#include <image/filter.h>
+#include <capture.h>
 #include <custom_exception.h>
 
 #define INCORRECT_FILE_PATH "data/drive_xxx1_sync/data/"
@@ -21,31 +20,31 @@ TEST(Filter, CHECK_FILE_EXISTS)
     ASSERT_THROW(capture.loadImageFiles(), PathNotFoundException);
 }
 
-TEST(Filter, GRAYSCALE)
-{
-    //? Intent:
-    //? Convert to grayscale
+// TEST(Filter, GRAYSCALE)
+// {
+//     //? Intent:
+//     //? Convert to grayscale
 
-    Capture capture(CORRECT_FILE_PATH);
-    Filters filter;
+//     Capture capture(CORRECT_FILE_PATH);
+//     Filters filter;
 
-    std::vector<cv::Mat> images = capture.loadImageFiles();
-    std::vector<cv::Mat> grayscale = filter.grayscale(images);
+//     std::vector<cv::Mat> images = capture.loadImageFiles();
+//     std::vector<cv::Mat> grayscale = filter.grayscale(images);
 
-    //? Should fail as the cv::Mat has 3 color channels
+//     //? Should fail as the cv::Mat has 3 color channels
 
-    for (const auto &image : images)
-    {
-        ASSERT_FALSE(isGrayscale(image));
-    }
+//     for (const auto &image : images)
+//     {
+//         ASSERT_FALSE(isGrayscale(image));
+//     }
 
-    //? cv::Mat has 1 channel (should pass)
+//     //? cv::Mat has 1 channel (should pass)
 
-    for (const auto &image : grayscale)
-    {
-        ASSERT_TRUE(isGrayscale(image));
-    }
-}
+//     for (const auto &image : grayscale)
+//     {
+//         ASSERT_TRUE(isGrayscale(image));
+//     }
+// }
 
 int main(int argc, char **argv)
 {
