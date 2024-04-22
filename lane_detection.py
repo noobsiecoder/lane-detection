@@ -127,8 +127,8 @@ while video_capture.isOpened():
     combined_output_left = cv.addWeighted(frame, 0.9, left_lane_image, 1, 1)
     combined_output_right = cv.addWeighted(frame, 0.9, right_lane_image, 1, 1)
 
-    cv.imshow("Left", combined_output_left)
-    cv.imshow("Right", combined_output_right)
+    # cv.imshow("Left", combined_output_left)
+    # cv.imshow("Right", combined_output_right)
 
     if cv.waitKey(10) & 0xFF == ord('q'):
         break
