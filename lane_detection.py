@@ -29,19 +29,6 @@ def define_region_of_interest(frame):
     masked_frame = cv.bitwise_and(frame, mask)
     return masked_frame
 
-def identify_lane_lines(frame, detected_lines):
-    lanes_left = []
-    lanes_right = []
-    for line in detected_lines:
-        x1, y1, x2, y2 = line.reshape(4)
-        fit = np.polyfit((x1, x2), (y1, y2), 1)
-        slope = fit[0]
-        if slope < 0:
-            lanes_left.append([x1, y1, x2, y2])
-        else:
-            lanes_right.append([x1, y1, x2, y2])
-    return lanes_left, lanes_right
-
 def draw_lane_lines(frame, lanes_left, lanes_right):
     lane_visualization = np.zeros_like(frame)
     for lane in lanes_left + lanes_right:
