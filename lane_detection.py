@@ -171,7 +171,7 @@ class lane_detec():
         estimate_l = []
         estimate_r = []
 
-        particle_filter_left = Particle_filter(1000,900)
+        particle_filter_left = Particle_filter(900,900)
         particle_filter_right = Particle_filter(900,800)
 
         video_capture = cv.VideoCapture(path)
@@ -185,7 +185,7 @@ class lane_detec():
             roi_frame = define_region_of_interest1(canny_edges)
 
             # Getting the hough lines from the image
-            hough_lines = cv.HoughLinesP(roi_frame, 2, np.pi / 180, 100, np.array([]), minLineLength=100, maxLineGap=150)
+            hough_lines = cv.HoughLinesP(roi_frame, 2, np.pi / 180, 100, np.array([]), minLineLength=50, maxLineGap=150)
             dim = np.shape(frame)
             
             # Splitting the left and right lanes
@@ -291,7 +291,7 @@ class lane_detec():
             # combined_output = side_debug(frame, left_lane, right_lane)
             # combined_output = side_debug(frame, lanes_left, lanes_right)
             
-            cv.imshow("Lane Lines", combined_output)
+            cv.imshow("Lane Lines pf", combined_output)
 
             if cv.waitKey(10) & 0xFF == ord('q'):
                 break
@@ -300,4 +300,4 @@ class lane_detec():
         cv.destroyAllWindows()
 
 if __name__ == '__main__':
-    lane_detec(r"data\video\video1.mp4")
+    lane_detec(r"data\video\video3.mp4")
