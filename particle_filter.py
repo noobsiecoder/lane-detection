@@ -2,10 +2,10 @@ import numpy as np
 import math
 
 class Particle_filter():
-    def __init__(self) -> None:
+    def __init__(self, variance_bottom, variance_top) -> None:
         
-        self.variance_bottom = 1000 #10 #5
-        self.variance_top = 1000 #100 #10
+        self.variance_bottom = variance_bottom # std_dev_bottom ** 2 # 900 #10 #5
+        self.variance_top = variance_top # std_dev_top ** 2 # 800 #100 #10
         pass
 
     def get_gaussian(self, value, mean, variance):

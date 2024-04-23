@@ -29,7 +29,7 @@ def define_region_of_interest1(frame):
     mask = np.zeros_like(frame)
     cv.fillPoly(mask, mask_vertices, 255)
     masked_frame = cv.bitwise_and(frame, mask)
-    cv.imshow("ROI", masked_frame)
+    # cv.imshow("ROI", masked_frame)
     return masked_frame
 
 def define_region_of_interest(edges, top_width_factor=0.1, bottom_width_factor=1.0, height_factor=0.6):
@@ -171,7 +171,8 @@ class lane_detec():
         estimate_l = []
         estimate_r = []
 
-        particle_filter = Particle_filter()
+        particle_filter_left = Particle_filter(1000,900)
+        particle_filter_right = Particle_filter(900,800)
 
         video_capture = cv.VideoCapture(path)
         while video_capture.isOpened():
@@ -267,8 +268,8 @@ class lane_detec():
             # right_lane_t1 = right_lane.copy()
 
             """ The scoring function goes here"""
-            left_lane = particle_filter.get_estimate(lanes_left, estimate_l)
-            right_lane = particle_filter.get_estimate(lanes_right, estimate_r)
+            left_lane = particle_filter_left.get_estimate(lanes_left, estimate_l)
+            right_lane = particle_filter_right.get_estimate(lanes_right, estimate_r)
 
             right_lane_t1 = right_lane.copy()
             left_lane_t1 = left_lane.copy()
