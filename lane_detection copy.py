@@ -31,9 +31,13 @@ def define_region_of_interest(frame):
 
 def draw_lane_lines(frame, lanes_left, lanes_right):
     lane_visualization = np.zeros_like(frame)
+    # try:
     for lane in lanes_left + lanes_right:
         x1, y1, x2, y2 = lane
         cv.line(lane_visualization, (x1, y1), (x2, y2), (0, 255, 0), 5)
+    # except:
+    #     print("except")
+    #     pass
     return lane_visualization
 
 def debug_draw(frame, lanes):
@@ -44,8 +48,10 @@ def debug_draw(frame, lanes):
     return lane_visualization
 
 
-def verify_lines(lanes, side):
+def verify_lines(lanes, side, dim):
     c = 20
+    FLAG = True
+    LANE_FOUND = False
     AGC_verifed_lanes = []
 
     if side == 'l':
@@ -60,9 +66,29 @@ def verify_lines(lanes, side):
         slope = math.degrees(fit[0])
 
         if lower_bound <= slope and slope <= upper_bound:
-            AGC_verifed_lanes.append([x1, y1, x2, y2])
+            LANE_FOUND = True
+            slope = (y2 - y1) / (x2 - x1)
+
+            y3 = (3 * dim[0]) // 4
+            x3 = int((y3 - y2) // slope) + x2
+
+            y0 = dim[1]
+            x0 = int((y0 - y2) // slope) + x2
+    
+            if side == 'l':
+                AGC_verifed_lanes.append([x0, y0, x3, y3])
+            else:
+                AGC_verifed_lanes.append([x3, y3, x0, y0])
     
     return AGC_verifed_lanes
+            # if FLAG:
+            #     x_new = x0
+            #     FLAG = False
+
+            # if side == 'l' and x0 > x_new:
+            #     x_new = x0
+            # elif side == 'r' and x0 < x_new:
+            #     x_new = x0
 
 def split_lanes(width, hough_lines):
     left_lanes = []
@@ -101,6 +127,8 @@ class lane_detec():
     def __init__(self, path) -> None:
         
         FIRST_RUN = True
+        left_lane = []
+        right_lane = []
 
         video_capture = cv.VideoCapture(path)
         while video_capture.isOpened():
@@ -120,13 +148,26 @@ class lane_detec():
             lanes_left, lanes_right = split_lanes(dim[1], hough_lines)
 
             # Filtering the lines using AGC
-            lanes_left = verify_lines(lanes_left, "l")
-            lanes_right = verify_lines(lanes_right, "r")
+            lanes_left = verify_lines(lanes_left, "l", dim)
+            lanes_right = verify_lines(lanes_right, "r", dim)
 
-            
+            if FIRST_RUN and len(lanes_left) > 0 and len(lanes_right) > 0:
+                xl_targ = lanes_left[0][0]
+                xr_targ = lanes_right[0][0]
+
+                for [x0, y0, x1, y1] in lanes_left:
+                    if x0 < xl_targ:
+                        xl_targ = x0
+                        left_lane = [[x0, y0, x1, y1]]
+
+                for [x1, y1, x0, y0] in lanes_right:
+                    if x1 < xr_targ:
+                        xr_targ = x1
+                        right_lane = [[x1, y1, x0, y0]]
             """ The scoring function goes here"""
             
-            lane_lines_image = draw_lane_lines(frame, lanes_left, lanes_right)
+            # lane_lines_image = draw_lane_lines(frame, lanes_left, lanes_right)
+            lane_lines_image = draw_lane_lines(frame, left_lane, right_lane)
             combined_output = cv.addWeighted(frame, 0.9, lane_lines_image, 1, 1)
 
             # Uncomment to view the each side
