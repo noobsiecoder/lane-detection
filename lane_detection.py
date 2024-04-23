@@ -32,23 +32,30 @@ def apply_canny_edge_detection(frame, upper_thresh=30, lower_thresh=10):
     
     return closed
 
-def define_region_of_interest(edges):
+def define_region_of_interest(edges, top_width_factor=0.1, bottom_width_factor=1.0, height_factor=0.6):
     imshape = edges.shape
     mask = np.zeros_like(edges)
     ignore_mask_color = 255
 
-    # Define a trapezoid to focus on lanes in the distance
+    # Calculate the width of the top and bottom of the trapezoid relative to the image width
+    top_width = top_width_factor * imshape[1]
+    bottom_width = bottom_width_factor * imshape[1]
+
+    # Calculate the height of the trapezoid relative to the image height
+    roi_height = height_factor * imshape[0]
+
+    # Define vertices for a four-sided polygon to mask
     vertices = np.array([[
-        (0, imshape[0]),  # Bottom left corner
-        (imshape[1] * 0.45, imshape[0] * 0.6),  # Top left corner
-        (imshape[1] * 0.55, imshape[0] * 0.6),  # Top right corner
-        (imshape[1], imshape[0])  # Bottom right corner
+        ((imshape[1] - top_width) / 2, roi_height),  # Top left corner
+        ((imshape[1] + top_width) / 2, roi_height),  # Top right corner
+        (imshape[1] - (imshape[1] - bottom_width) / 2, imshape[0]),  # Bottom right corner
+        ((imshape[1] - bottom_width) / 2, imshape[0]),  # Bottom left corner
     ]], dtype=np.int32)
 
-    # Fill the defined polygon with white color in the mask image
+    # Fill the polygon with white in the mask image
     cv.fillPoly(mask, vertices, ignore_mask_color)
 
-    # Masking the edges image with the defined polygon
+    # Apply the mask and return the masked edges
     masked_edges = cv.bitwise_and(edges, edges, mask=mask)
     return masked_edges
 
@@ -128,44 +135,39 @@ def calculate_median_lines(left_lanes, right_lanes):
 def calculate_intersection_and_bottom(median_left, median_right, frame_height):
     median_left_m, median_left_b = median_left
     median_right_m, median_right_b = median_right
-    try:
+    
+    # Check for parallel lines to avoid division by zero
+    if median_right_m != median_left_m:
         x_intersect = (median_left_b - median_right_b) / (median_right_m - median_left_m)
         y_intersect = median_right_m * x_intersect + median_right_b
-    except ZeroDivisionError:
-        x_intersect, y_intersect = None, None  
+    else:
+        x_intersect, y_intersect = None, None  # Parallel lines do not intersect
+
+    # Calculate bottom points safely, considering potential infinite or undefined slopes
     try:
-        left_bottom = (frame_height - median_left_b) / median_left_m
-        right_bottom = (frame_height - median_right_b) / median_right_m
+        left_bottom = (frame_height - median_left_b) / median_left_m if median_left_m != 0 else None
     except ZeroDivisionError:
-        left_bottom, right_bottom = None, None  
+        left_bottom = None
+
+    try:
+        right_bottom = (frame_height - median_right_b) / median_right_m if median_right_m != 0 else None
+    except ZeroDivisionError:
+        right_bottom = None
 
     return (x_intersect, y_intersect), (left_bottom, right_bottom)
 
 def draw_optimized_line(frame, left_bottom_median, right_bottom_median, x_intersect_median, y_intersect_median):
-    # Create a blank image (same size as frame) to draw lines on
     line_image = np.zeros_like(frame)
-    
-    # Draw the left lane line
-    if left_bottom_median is not None and x_intersect_median is not None and y_intersect_median is not None:
-        cv.line(
-            line_image,
-            (np.int_(left_bottom_median), frame.shape[0]),
-            (np.int_(x_intersect_median), np.int_(y_intersect_median)),
-            (255, 0, 0), 5
-        )
 
-    # Draw the right lane line
-    if right_bottom_median is not None and x_intersect_median is not None and y_intersect_median is not None:
-        cv.line(
-            line_image,
-            (int(right_bottom_median), frame.shape[0]),
-            (int(x_intersect_median), int(y_intersect_median)),
-            (0, 0, 255), 5
-        )
+    if not np.isnan(x_intersect_median) and not np.isnan(y_intersect_median):
+        if not np.isnan(left_bottom_median):
+            cv.line(line_image, (int(left_bottom_median), frame.shape[0]), 
+                    (int(x_intersect_median), int(y_intersect_median)), (255, 0, 0), 10)
+        if not np.isnan(right_bottom_median):
+            cv.line(line_image, (int(right_bottom_median), frame.shape[0]),
+                    (int(x_intersect_median), int(y_intersect_median)), (0, 0, 255), 10)
 
-    # Combine the line image with the original frame
     lane_edges = cv.addWeighted(frame, 0.8, line_image, 1, 0)
-    
     return lane_edges
 
 def lane_tracking(lanes_left, lanes_right, frame, tracker):
@@ -189,7 +191,7 @@ def lane_tracking(lanes_left, lanes_right, frame, tracker):
 
 tracker = LaneTracker(num_frames_to_median=19)
 # Main execution block
-video_capture = cv.VideoCapture(r"C:\Users\josep\Downloads\input.mp4")
+video_capture = cv.VideoCapture(r"C:\Users\josep\Downloads\video2.mp4")
 while video_capture.isOpened():
     successful_frame_read, frame = video_capture.read()
     if not successful_frame_read:
@@ -197,10 +199,10 @@ while video_capture.isOpened():
 
     # Getting the edge image and defining roi
     canny_edges = apply_canny_edge_detection(frame)
-    roi_frame = define_region_of_interest(canny_edges)
+    roi_frame = define_region_of_interest(canny_edges, 0.25, 1, 0.4)
     cv.imshow("canny", roi_frame)
     # Getting the hough lines from the image
-    hough_lines = cv.HoughLinesP(roi_frame, 2, np.pi / 180, 30, np.array([]), minLineLength=20, maxLineGap=1)
+    hough_lines = cv.HoughLinesP(roi_frame, 2, np.pi / 180, 100, np.array([]), minLineLength=100, maxLineGap=150)
     dim = np.shape(frame)
     
     # Splitting the left and right lanes
