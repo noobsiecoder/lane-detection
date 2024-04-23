@@ -119,10 +119,10 @@ def side_debug(frame, lanes_left, lanes_right, edge = None):
     combined_output_left = cv.addWeighted(frame, 0.9, left_lane_image, 1, 1)
     combined_output_right = cv.addWeighted(frame, 0.9, right_lane_image, 1, 1)
 
-    cv.imshow("left", combined_output_left)
-    cv.imshow("right", combined_output_right)
+    # cv.imshow("left", combined_output_left)
+    # cv.imshow("right", combined_output_right)
 
-    # return np.hstack((combined_output_left, combined_output_right))    
+    return np.hstack((combined_output_left, combined_output_right))    
 
 class lane_detec():
     
@@ -208,10 +208,10 @@ class lane_detec():
             combined_output = cv.addWeighted(frame, 0.9, lane_lines_image, 1, 1)
 
             # Uncomment to view the each side
-            combined_output = side_debug(frame, left_lane, right_lane)
-            combined_output = side_debug(frame, lanes_left, lanes_right)
+            # combined_output = side_debug(frame, left_lane, right_lane)
+            # combined_output = side_debug(frame, lanes_left, lanes_right)
             
-            # cv.imshow("Lane Lines", combined_output)
+            cv.imshow("Lane Lines", combined_output)
 
             if cv.waitKey(10) & 0xFF == ord('q'):
                 break
