@@ -33,24 +33,32 @@ lane_detection_project/
 │   │   │   ├── data/
 │   │   │   │   ├── 0000000000.png
 │   │   │   │   └── ...
-│   │   │   ├── timestamps.txt
+│   │   │   └── timestamps.txt
 │   │   ├── image_01/
 │   │   ├── image_02/
 │   │   ├── image_03/
 │   │   └── ...
-│   ├── videos/
-│   │   ├── video1.mp4
-│   │   ├── video2.mp4
-│   │   └── video3.mp4
-│   └── ...
+│   └── videos/
+│       ├── video1.mp4
+│       ├── video2.mp4
+│       └── video3.mp4
 │
 ├── include/
 │   ├── capture.h
 │   ├── custom_exception.h
 │   ├── custom_types.h
 │   ├── edge_features.h
-│   ├── filters.h
-│   └── ...
+│   └── filters.h
+│
+├── samples/
+│   ├── Figure_1.png
+│   ├── Figure_2.png
+│   ├── Figure_3.png
+│   ├── Figure_4.png
+│   ├── Figure_5.png
+│   ├── output_video_0002.gif
+│   ├── output_video_0027.gif
+│   └── output_video_0029.gif
 │
 ├── src/
 │   ├── capture.cc
@@ -58,12 +66,10 @@ lane_detection_project/
 │   ├── edge_features.cc
 │   ├── filters.cc
 │   ├── lane-detect.py
-│   ├── main.cc
-│   └── ...
+│   └── main.cc
 │
 ├── tests/
-│   ├── unit_test.cc
-│   └── ...
+│   └── unit_test.cc
 │
 └── .gitignore
 └── CMakeLists.txt
