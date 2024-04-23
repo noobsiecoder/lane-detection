@@ -34,6 +34,7 @@ def draw_lane_lines(frame, lanes_left, lanes_right):
     for lane in lanes_left + lanes_right:
         x1, y1, x2, y2 = lane
         cv.line(lane_visualization, (x1, y1), (x2, y2), (0, 255, 0), 5)
+
     return lane_visualization
 
 def debug_draw(frame, lanes):
@@ -44,8 +45,10 @@ def debug_draw(frame, lanes):
     return lane_visualization
 
 
-def verify_lines(lanes, side):
+def verify_lines(lanes, side, dim):
     c = 20
+    FLAG = True
+    LANE_FOUND = False
     AGC_verifed_lanes = []
 
     if side == 'l':
@@ -60,9 +63,29 @@ def verify_lines(lanes, side):
         slope = math.degrees(fit[0])
 
         if lower_bound <= slope and slope <= upper_bound:
-            AGC_verifed_lanes.append([x1, y1, x2, y2])
+            LANE_FOUND = True
+            slope = (y2 - y1) / (x2 - x1)
+
+            y3 = (3 * dim[0]) // 4
+            x3 = int((y3 - y2) // slope) + x2
+
+            y0 = dim[1]
+            x0 = int((y0 - y2) // slope) + x2
+    
+            if side == 'l':
+                AGC_verifed_lanes.append([x0, y0, x3, y3])
+            else:
+                AGC_verifed_lanes.append([x3, y3, x0, y0])
     
     return AGC_verifed_lanes
+            # if FLAG:
+            #     x_new = x0
+            #     FLAG = False
+
+            # if side == 'l' and x0 > x_new:
+            #     x_new = x0
+            # elif side == 'r' and x0 < x_new:
+            #     x_new = x0
 
 def split_lanes(width, hough_lines):
     left_lanes = []
@@ -77,48 +100,117 @@ def split_lanes(width, hough_lines):
 
     return left_lanes, right_lanes
 
-# Main execution block
-video_capture = cv.VideoCapture(r"data\video\video3.mp4")
-while video_capture.isOpened():
-    successful_frame_read, frame = video_capture.read()
-    if not successful_frame_read:
-        break
+def side_debug(frame, lanes_left, lanes_right, edge = None):
 
-    # Getting the edge image and defining roi
-    canny_edges = apply_canny_edge_detection(frame)
-    roi_frame = define_region_of_interest(canny_edges)
-
-    # Getting the hough lines from the image
-    hough_lines = cv.HoughLinesP(roi_frame, 2, np.pi / 180, 100, np.array([]), minLineLength=100, maxLineGap=150)
+    # Getting the dimensions of the image
     dim = np.shape(frame)
-    
-    # Splitting the left and right lanes
-    lanes_left, lanes_right = split_lanes(dim[1], hough_lines)
 
-    # Filtering the lines using AGC
-    lanes_left = verify_lines(lanes_left, "l")
-    lanes_right = verify_lines(lanes_right, "r")
-    
-    lane_lines_image = draw_lane_lines(frame, lanes_left, lanes_right)
-    
-    combined_output = cv.addWeighted(frame, 0.9, lane_lines_image, 1, 1)
-
-    cv.imshow("Lane Lines", combined_output)
-
-    # Debug block, pay no heed
+    # Drawing thee lines
     left_lane_image = debug_draw(frame, lanes_left)
     right_lane_image = debug_draw(frame, lanes_right)
 
-    debug_line = lane_lines_image + canny_edges.reshape(dim[0],dim[1],1)
+    if(edge is not None):
+        frame = left_lane_image + edge.reshape(dim[0],dim[1],1)
+        frame = right_lane_image + edge.reshape(dim[0],dim[1],1)
 
+    # Overlaying the lines on the image
     combined_output_left = cv.addWeighted(frame, 0.9, left_lane_image, 1, 1)
     combined_output_right = cv.addWeighted(frame, 0.9, right_lane_image, 1, 1)
 
-    # cv.imshow("Left", combined_output_left)
-    # cv.imshow("Right", combined_output_right)
+    return np.hstack((combined_output_left, combined_output_right))    
 
-    if cv.waitKey(10) & 0xFF == ord('q'):
-        break
+class lane_detec():
+    
+    def __init__(self, path) -> None:
+        
+        FIRST_RUN = True
+        
+        left_lane = []
+        right_lane = []
 
-video_capture.release()
-cv.destroyAllWindows()
+        left_lane_t1 = []
+        right_lane_t1 = []
+
+        left_lane_t2 = []
+        right_lane_t2 = []
+
+        estimate_l = []
+        estimate_r = []
+
+        video_capture = cv.VideoCapture(path)
+        while video_capture.isOpened():
+            successful_frame_read, frame = video_capture.read()
+            if not successful_frame_read:
+                break
+
+            # Getting the edge image and defining roi
+            canny_edges = apply_canny_edge_detection(frame)
+            roi_frame = define_region_of_interest(canny_edges)
+
+            # Getting the hough lines from the image
+            hough_lines = cv.HoughLinesP(roi_frame, 2, np.pi / 180, 100, np.array([]), minLineLength=100, maxLineGap=150)
+            dim = np.shape(frame)
+            
+            # Splitting the left and right lanes
+            lanes_left, lanes_right = split_lanes(dim[1], hough_lines)
+
+            # Filtering the lines using AGC
+            lanes_left = verify_lines(lanes_left, "l", dim)
+            lanes_right = verify_lines(lanes_right, "r", dim)
+
+            if FIRST_RUN and len(lanes_left) > 0 and len(lanes_right) > 0:
+                xl_targ = lanes_left[0][0]
+                xr_targ = lanes_right[0][0]
+
+                for [x0, y0, x1, y1] in lanes_left:
+                    if x0 < xl_targ:
+                        xl_targ = x0
+                        left_lane = [[x0, y0, x1, y1]]
+
+                for [x1, y1, x0, y0] in lanes_right:
+                    if x1 < xr_targ:
+                        xr_targ = x1
+                        right_lane = [[x1, y1, x0, y0]]
+
+                left_lane_t1 = left_lane.copy()
+                left_lane_t2 = left_lane.copy()
+
+                right_lane_t1 = right_lane.copy()
+                right_lane_t2 = right_lane.copy()
+
+                # FIRST_RUN = False
+
+            if len(left_lane_t1) > 0 and len(left_lane_t2) > 0:
+                delta_l = np.array(left_lane_t1) - np.array(left_lane_t2)
+                estimate_l = list(np.array(left_lane) + np.array(delta_l))
+            else:
+                estimate_l = left_lane.copy()
+            
+            if len(right_lane_t1) > 0 and len(right_lane_t2) > 0:
+                delta_r = np.array(right_lane_t1) - np.array(right_lane_t2)
+                estimate_r = list(np.array(right_lane) + np.array(delta_r))
+            else:
+                estimate_r = right_lane.copy()
+
+            """ The scoring function goes here"""
+            
+            
+
+            # lane_lines_image = draw_lane_lines(frame, lanes_left, lanes_right)
+            lane_lines_image = draw_lane_lines(frame, left_lane, right_lane)
+            combined_output = cv.addWeighted(frame, 0.9, lane_lines_image, 1, 1)
+
+            # Uncomment to view the each side
+            # combined_output = side_debug(frame, left_lane, right_lane)
+            # combined_output = side_debug(frame, lanes_left, lanes_right)
+            
+            cv.imshow("Lane Lines", combined_output)
+
+            if cv.waitKey(10) & 0xFF == ord('q'):
+                break
+
+        video_capture.release()
+        cv.destroyAllWindows()
+
+if __name__ == '__main__':
+    lane_detec(r"data\video\video2.mp4")
