@@ -4,8 +4,8 @@ import math
 class Particle_filter():
     def __init__(self) -> None:
         
-        self.variance_bottom = 5
-        self.variance_top = 15
+        self.variance_bottom = 1000 #10 #5
+        self.variance_top = 1000 #100 #10
         pass
 
     def get_gaussian(self, value, mean, variance):
@@ -48,7 +48,8 @@ class Particle_filter():
             # Updating the particles using the PMF
             updated_particle_indices = np.random.choice(indices, size=len(particles), p=pmf)
         except:
-            print("probs: ", probs)
+            # print("probs: ", probs)
+            probs = []
             
             print("reading: ", reading)
             print("\n----------\n")
@@ -59,11 +60,12 @@ class Particle_filter():
                 
                 print("err0: ", err0)
                 print("err1: ", err1)
-                # probs.append(err0 * err1)
+                probs.append(err0 * err1)
 
                 y0 = particle[1]
                 y1 = particle[3]
                 pass
+            # exit()
 
             return []
 
@@ -77,4 +79,4 @@ class Particle_filter():
         x0 = sum(x0_list) // len(x0_list)
         x1 = sum(x1_list) // len(x1_list)
         
-        return [[x0, y0, x1, y1]]
+        return [x0, y0, x1, y1]

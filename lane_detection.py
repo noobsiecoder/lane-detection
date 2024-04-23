@@ -15,7 +15,7 @@ def apply_canny_edge_detection(frame, upper_thresh=30, lower_thresh=10):
     
     return closed
 
-def define_region_of_interest(frame):
+def define_region_of_interest1(frame):
     frame_height, frame_width = frame.shape[:2]
     top_width = frame_width // 3
     bottom_width = frame_width
@@ -29,13 +29,48 @@ def define_region_of_interest(frame):
     mask = np.zeros_like(frame)
     cv.fillPoly(mask, mask_vertices, 255)
     masked_frame = cv.bitwise_and(frame, mask)
+    cv.imshow("ROI", masked_frame)
     return masked_frame
+
+def define_region_of_interest(edges, top_width_factor=0.1, bottom_width_factor=1.0, height_factor=0.6):
+    imshape = edges.shape
+    mask = np.zeros_like(edges)
+    ignore_mask_color = 255
+
+    # Calculate the width of the top and bottom of the trapezoid relative to the image width
+    top_width = top_width_factor * imshape[1]
+    bottom_width = bottom_width_factor * imshape[1]
+
+    # Calculate the height of the trapezoid relative to the image height
+    roi_height = height_factor * imshape[0]
+
+    # Define vertices for a four-sided polygon to mask
+    vertices = np.array([[
+        ((imshape[1] - top_width) / 2, roi_height),  # Top left corner
+        ((imshape[1] + top_width) / 2, roi_height),  # Top right corner
+        (imshape[1] - (imshape[1] - bottom_width) / 2, imshape[0]),  # Bottom right corner
+        ((imshape[1] - bottom_width) / 2, imshape[0]),  # Bottom left corner
+    ]], dtype=np.int32)
+
+    # Fill the polygon with white in the mask image
+    cv.fillPoly(mask, vertices, ignore_mask_color)
+
+    # Apply the mask and return the masked edges
+    masked_edges = cv.bitwise_and(edges, edges, mask=mask)
+    return masked_edges
 
 def draw_lane_lines(frame, lanes_left, lanes_right):
     lane_visualization = np.zeros_like(frame)
-    for lane in lanes_left + lanes_right:
-        x1, y1, x2, y2 = lane
-        cv.line(lane_visualization, (x1, y1), (x2, y2), (0, 255, 0), 5)
+    # for lane in lanes_left + lanes_right:
+        # print(lanes_right)
+        # x1, y1, x2, y2 = lane
+        # cv.line(lane_visualization, (x1, y1), (x2, y2), (0, 255, 0), 5)
+    if len(lanes_left) > 0:
+        cv.line(lane_visualization, (lanes_left[0], lanes_left[1]), (lanes_left[2], lanes_left[3]), (0, 255, 0), 5)
+    
+    if len(lanes_right) > 0:
+        cv.line(lane_visualization, (lanes_right[0], lanes_right[1]), (lanes_right[2], lanes_right[3]), (0, 255, 0), 5)
+
 
     return lane_visualization
 
@@ -80,14 +115,6 @@ def verify_lines(lanes, side, dim):
                 AGC_verifed_lanes.append([x3, y3, x0, y0])
     
     return AGC_verifed_lanes
-            # if FLAG:
-            #     x_new = x0
-            #     FLAG = False
-
-            # if side == 'l' and x0 > x_new:
-            #     x_new = x0
-            # elif side == 'r' and x0 < x_new:
-            #     x_new = x0
 
 def split_lanes(width, hough_lines):
     left_lanes = []
@@ -96,7 +123,7 @@ def split_lanes(width, hough_lines):
     for detec_line in hough_lines:
         x1, y1, x2, y2 = detec_line.reshape(4)        
         if (x1 + x2)/2 > width/2:
-            right_lanes.append([x1, y1, x2, y2])
+            right_lanes.append([x2, y2, x1, y1]) # Swapped this
         else:
             left_lanes.append([x1, y1, x2, y2])
 
@@ -129,6 +156,8 @@ class lane_detec():
     def __init__(self, path) -> None:
         
         FIRST_RUN = True
+        REFRESH_LEFT_LANE = True
+        REFRESH_RIGHT_LANE = True
         
         left_lane = []
         right_lane = []
@@ -152,7 +181,7 @@ class lane_detec():
 
             # Getting the edge image and defining roi
             canny_edges = apply_canny_edge_detection(frame)
-            roi_frame = define_region_of_interest(canny_edges)
+            roi_frame = define_region_of_interest1(canny_edges)
 
             # Getting the hough lines from the image
             hough_lines = cv.HoughLinesP(roi_frame, 2, np.pi / 180, 100, np.array([]), minLineLength=100, maxLineGap=150)
@@ -165,54 +194,95 @@ class lane_detec():
             lanes_left = verify_lines(lanes_left, "l", dim)
             lanes_right = verify_lines(lanes_right, "r", dim)
 
-            if FIRST_RUN and len(lanes_left) > 0 and len(lanes_right) > 0:
+            # if FIRST_RUN and len(lanes_left) > 0 and len(lanes_right) > 0:
+            if REFRESH_LEFT_LANE and len(lanes_left) > 0:
                 xl_targ = lanes_left[0][0]
-                xr_targ = lanes_right[0][0]
+                
+                x0_list = []
+                x1_list = []
+                # for [x0, y0, x1, y1] in lanes_left:
+                #     if x0 < xl_targ:
+                #         xl_targ = x0
+                #         left_lane = [x0, y0, x1, y1]
 
                 for [x0, y0, x1, y1] in lanes_left:
-                    if x0 < xl_targ:
-                        xl_targ = x0
-                        left_lane = [[x0, y0, x1, y1]]
-
-                for [x1, y1, x0, y0] in lanes_right:
-                    if x1 < xr_targ:
-                        xr_targ = x1
-                        right_lane = [[x1, y1, x0, y0]]
+                    x0_list.append(x0)
+                    x1_list.append(x1)
+                
+                x0 = int(np.median(np.array(x0_list)))
+                x1 = int(np.median(np.array(x1_list)))
 
                 left_lane_t1 = left_lane.copy()
                 left_lane_t2 = left_lane.copy()
+                left_lane = [x0, y0, x1, y1]
 
+                REFRESH_LEFT_LANE = False
+
+
+            if REFRESH_RIGHT_LANE and len(lanes_right) > 0:
+                xr_targ = lanes_right[0][0]
+
+                # for [x1, y1, x0, y0] in lanes_right:
+                #     if x1 < xr_targ:
+                #         xr_targ = x1
+                #         right_lane = [x1, y1, x0, y0]
+                x0_list = []
+                x1_list = []
+
+                for [x0, y0, x1, y1] in lanes_right:
+                    x0_list.append(x0)
+                    x1_list.append(x1)
+                
+                x0 = int(np.median(np.array(x0_list)))
+                x1 = int(np.median(np.array(x1_list)))
+
+                right_lane = [x0, y0, x1, y1]
+                
                 right_lane_t1 = right_lane.copy()
                 right_lane_t2 = right_lane.copy()
 
-                FIRST_RUN = False
+                print("Median: ", right_lane)
+                # print("Closest: ", right_lane)
+
+                REFRESH_RIGHT_LANE = False
 
             if len(left_lane_t1) > 0 and len(left_lane_t2) > 0:
                 delta_l = np.array(left_lane_t1) - np.array(left_lane_t2)
-                estimate_l = np.array(left_lane) + np.array(delta_l)
-                estimate_l = estimate_l.tolist()[0]
+                estimate_l = np.array(left_lane_t1) + np.array(delta_l)
+                estimate_l = estimate_l.tolist()
             else:
                 estimate_l = left_lane.copy()
             
             if len(right_lane_t1) > 0 and len(right_lane_t2) > 0:
                 delta_r = np.array(right_lane_t1) - np.array(right_lane_t2)
-                estimate_r = np.array(right_lane) + np.array(delta_r)
-                estimate_r = estimate_r.tolist()[0]
+                estimate_r = np.array(right_lane_t1) + np.array(delta_r)
+                estimate_r = estimate_r.tolist()
             else:
                 estimate_r = right_lane.copy()
 
             left_lane_t2 = left_lane_t1.copy()
-            left_lane_t1 = left_lane.copy()
+            # left_lane_t1 = left_lane.copy()
 
             right_lane_t2 = right_lane_t1.copy()
-            right_lane_t1 = right_lane.copy()
+            # right_lane_t1 = right_lane.copy()
 
             """ The scoring function goes here"""
             left_lane = particle_filter.get_estimate(lanes_left, estimate_l)
             right_lane = particle_filter.get_estimate(lanes_right, estimate_r)
-            # print(left_lane)
+
+            right_lane_t1 = right_lane.copy()
+            left_lane_t1 = left_lane.copy()
+
+            if len(left_lane) < 1:
+                REFRESH_LEFT_LANE = True
+                print
+            
+            if len(estimate_r) < 1:
+                REFRESH_RIGHT_LANE = True
+                print("Called!")
 
             # lane_lines_image = draw_lane_lines(frame, lanes_left, lanes_right)
+
             lane_lines_image = draw_lane_lines(frame, left_lane, right_lane)
             combined_output = cv.addWeighted(frame, 0.9, lane_lines_image, 1, 1)
 
@@ -229,4 +299,4 @@ class lane_detec():
         cv.destroyAllWindows()
 
 if __name__ == '__main__':
-    lane_detec(r"data\video\video2.mp4")
+    lane_detec(r"data\video\video1.mp4")
