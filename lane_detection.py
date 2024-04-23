@@ -2,6 +2,8 @@ import cv2 as cv
 import numpy as np
 import math
 
+from particle_filter import Particle_filter
+
 def apply_canny_edge_detection(frame, upper_thresh=30, lower_thresh=10):
     grayscale = cv.cvtColor(frame, cv.COLOR_RGB2GRAY)
     blurred = cv.GaussianBlur(grayscale, (5, 5), 0)
@@ -117,7 +119,10 @@ def side_debug(frame, lanes_left, lanes_right, edge = None):
     combined_output_left = cv.addWeighted(frame, 0.9, left_lane_image, 1, 1)
     combined_output_right = cv.addWeighted(frame, 0.9, right_lane_image, 1, 1)
 
-    return np.hstack((combined_output_left, combined_output_right))    
+    cv.imshow("left", combined_output_left)
+    cv.imshow("right", combined_output_right)
+
+    # return np.hstack((combined_output_left, combined_output_right))    
 
 class lane_detec():
     
@@ -136,6 +141,8 @@ class lane_detec():
 
         estimate_l = []
         estimate_r = []
+
+        particle_filter = Particle_filter()
 
         video_capture = cv.VideoCapture(path)
         while video_capture.isOpened():
@@ -201,10 +208,10 @@ class lane_detec():
             combined_output = cv.addWeighted(frame, 0.9, lane_lines_image, 1, 1)
 
             # Uncomment to view the each side
-            # combined_output = side_debug(frame, left_lane, right_lane)
-            # combined_output = side_debug(frame, lanes_left, lanes_right)
+            combined_output = side_debug(frame, left_lane, right_lane)
+            combined_output = side_debug(frame, lanes_left, lanes_right)
             
-            cv.imshow("Lane Lines", combined_output)
+            # cv.imshow("Lane Lines", combined_output)
 
             if cv.waitKey(10) & 0xFF == ord('q'):
                 break
