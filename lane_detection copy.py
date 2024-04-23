@@ -31,13 +31,10 @@ def define_region_of_interest(frame):
 
 def draw_lane_lines(frame, lanes_left, lanes_right):
     lane_visualization = np.zeros_like(frame)
-    # try:
     for lane in lanes_left + lanes_right:
         x1, y1, x2, y2 = lane
         cv.line(lane_visualization, (x1, y1), (x2, y2), (0, 255, 0), 5)
-    # except:
-    #     print("except")
-    #     pass
+
     return lane_visualization
 
 def debug_draw(frame, lanes):
@@ -127,8 +124,18 @@ class lane_detec():
     def __init__(self, path) -> None:
         
         FIRST_RUN = True
+        
         left_lane = []
         right_lane = []
+
+        left_lane_t1 = []
+        right_lane_t1 = []
+
+        left_lane_t2 = []
+        right_lane_t2 = []
+
+        estimate_l = []
+        estimate_r = []
 
         video_capture = cv.VideoCapture(path)
         while video_capture.isOpened():
@@ -164,13 +171,37 @@ class lane_detec():
                     if x1 < xr_targ:
                         xr_targ = x1
                         right_lane = [[x1, y1, x0, y0]]
+
+                left_lane_t1 = left_lane.copy()
+                left_lane_t2 = left_lane.copy()
+
+                right_lane_t1 = right_lane.copy()
+                right_lane_t2 = right_lane.copy()
+
+                # FIRST_RUN = False
+
+            if len(left_lane_t1) > 0 and len(left_lane_t2) > 0:
+                delta_l = np.array(left_lane_t1) - np.array(left_lane_t2)
+                estimate_l = list(np.array(left_lane) + np.array(delta_l))
+            else:
+                estimate_l = left_lane.copy()
+            
+            if len(right_lane_t1) > 0 and len(right_lane_t2) > 0:
+                delta_r = np.array(right_lane_t1) - np.array(right_lane_t2)
+                estimate_r = list(np.array(right_lane) + np.array(delta_r))
+            else:
+                estimate_r = right_lane.copy()
+
             """ The scoring function goes here"""
             
+            
+
             # lane_lines_image = draw_lane_lines(frame, lanes_left, lanes_right)
             lane_lines_image = draw_lane_lines(frame, left_lane, right_lane)
             combined_output = cv.addWeighted(frame, 0.9, lane_lines_image, 1, 1)
 
             # Uncomment to view the each side
+            # combined_output = side_debug(frame, left_lane, right_lane)
             # combined_output = side_debug(frame, lanes_left, lanes_right)
             
             cv.imshow("Lane Lines", combined_output)
@@ -182,4 +213,4 @@ class lane_detec():
         cv.destroyAllWindows()
 
 if __name__ == '__main__':
-    lane_detec(r"data\video\video3.mp4")
+    lane_detec(r"data\video\video2.mp4")
