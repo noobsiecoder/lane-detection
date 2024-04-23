@@ -2,6 +2,7 @@
 
 FILES=('01' '02' '11' '15' '27' '29' '32' '38' '42')
 OUTPUT=$1
+BUILD='Main'
 
 if [ -z "$OUTPUT" ]; then
     echo "Error: argument not found"
