@@ -16,17 +16,26 @@ include_directories(include)
 
 # Add executable for main
 add_executable(Main
-src/custom_exception.cc
-src/capture.cc src/filters.cc src/edge_features.cc
-src/main.cc
+    src/custom_exception.cc
+    src/capture.cc src/filters.cc src/edge_features.cc
+    src/main.cc
 )
 
 # Add executable for tests
-add_executable(test 
+add_executable(Test 
     src/custom_exception.cc
     src/capture.cc
-    tests/unit_test.cc)
+    tests/unit_test.cc
+)
+
+# Add executable for benchmark
+add_executable(Bench 
+    src/custom_exception.cc
+    src/capture.cc src/filters.cc src/edge_features.cc
+    tests/bench.cc
+)
 
 # Link Google Test and the test executable
 target_link_libraries(Main ${OpenCV_LIBS})
-target_link_libraries(test GTest::GTest GTest::Main ${OpenCV_LIBS})
+target_link_libraries(Test GTest::GTest GTest::Main ${OpenCV_LIBS})
+target_link_libraries(Bench ${OpenCV_LIBS})
