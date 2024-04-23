@@ -99,7 +99,9 @@ def side_debug(frame, lanes_left, lanes_right, edge = None):
 class lane_detec():
     
     def __init__(self, path) -> None:
-        # Main execution block
+        
+        FIRST_RUN = True
+
         video_capture = cv.VideoCapture(path)
         while video_capture.isOpened():
             successful_frame_read, frame = video_capture.read()
@@ -120,12 +122,15 @@ class lane_detec():
             # Filtering the lines using AGC
             lanes_left = verify_lines(lanes_left, "l")
             lanes_right = verify_lines(lanes_right, "r")
+
+            
+            """ The scoring function goes here"""
             
             lane_lines_image = draw_lane_lines(frame, lanes_left, lanes_right)
             combined_output = cv.addWeighted(frame, 0.9, lane_lines_image, 1, 1)
 
             # Uncomment to view the each side
-            combined_output = side_debug(frame, lanes_left, lanes_right)
+            # combined_output = side_debug(frame, lanes_left, lanes_right)
             
             cv.imshow("Lane Lines", combined_output)
 
