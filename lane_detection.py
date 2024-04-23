@@ -119,10 +119,10 @@ def side_debug(frame, lanes_left, lanes_right, edge = None):
     combined_output_left = cv.addWeighted(frame, 0.9, left_lane_image, 1, 1)
     combined_output_right = cv.addWeighted(frame, 0.9, right_lane_image, 1, 1)
 
-    cv.imshow("left", combined_output_left)
-    cv.imshow("right", combined_output_right)
+    # cv.imshow("left", combined_output_left)
+    # cv.imshow("right", combined_output_right)
 
-    # return np.hstack((combined_output_left, combined_output_right))    
+    return np.hstack((combined_output_left, combined_output_right))    
 
 class lane_detec():
     
@@ -185,33 +185,42 @@ class lane_detec():
                 right_lane_t1 = right_lane.copy()
                 right_lane_t2 = right_lane.copy()
 
-                # FIRST_RUN = False
+                FIRST_RUN = False
 
             if len(left_lane_t1) > 0 and len(left_lane_t2) > 0:
                 delta_l = np.array(left_lane_t1) - np.array(left_lane_t2)
-                estimate_l = list(np.array(left_lane) + np.array(delta_l))
+                estimate_l = np.array(left_lane) + np.array(delta_l)
+                estimate_l = estimate_l.tolist()[0]
             else:
                 estimate_l = left_lane.copy()
             
             if len(right_lane_t1) > 0 and len(right_lane_t2) > 0:
                 delta_r = np.array(right_lane_t1) - np.array(right_lane_t2)
-                estimate_r = list(np.array(right_lane) + np.array(delta_r))
+                estimate_r = np.array(right_lane) + np.array(delta_r)
+                estimate_r = estimate_r.tolist()[0]
             else:
                 estimate_r = right_lane.copy()
 
+            left_lane_t2 = left_lane_t1.copy()
+            left_lane_t1 = left_lane.copy()
+
+            right_lane_t2 = right_lane_t1.copy()
+            right_lane_t1 = right_lane.copy()
+
             """ The scoring function goes here"""
-            
-            
+            left_lane = particle_filter.get_estimate(lanes_left, estimate_l)
+            right_lane = particle_filter.get_estimate(lanes_right, estimate_r)
+            # print(left_lane)
 
             # lane_lines_image = draw_lane_lines(frame, lanes_left, lanes_right)
             lane_lines_image = draw_lane_lines(frame, left_lane, right_lane)
             combined_output = cv.addWeighted(frame, 0.9, lane_lines_image, 1, 1)
 
             # Uncomment to view the each side
-            combined_output = side_debug(frame, left_lane, right_lane)
-            combined_output = side_debug(frame, lanes_left, lanes_right)
+            # combined_output = side_debug(frame, left_lane, right_lane)
+            # combined_output = side_debug(frame, lanes_left, lanes_right)
             
-            # cv.imshow("Lane Lines", combined_output)
+            cv.imshow("Lane Lines", combined_output)
 
             if cv.waitKey(10) & 0xFF == ord('q'):
                 break
