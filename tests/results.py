@@ -1,6 +1,5 @@
 import timeit
 
-
 def precision(true_positives, false_positives):
     '''
     Precision measures the proportion of true positive predictions among all positive predictions made by the model
