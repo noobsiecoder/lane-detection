@@ -4,14 +4,16 @@ This project is developed as the final project for the EECE5639 Computer Vision 
 
 ## Demo
 
-- Lane detection using Hough Transform
-  ![figure_0029](/samples/output_video_0029.gif)
-  ![figure_0027](/samples/output_video_0027.gif)
-  ![figure_0002](/samples/output_video_0002.gif)
+### Lane detection using Hough Transform
 
-- Road Segmentation using U-Net
-  ![figure_0001](/models/predicted-1.png)
-  ![figure_0002](/models/predicted-2.png)
+![figure_0029](/samples/output_video_0029.gif)
+![figure_0027](/samples/output_video_0027.gif)
+![figure_0002](/samples/output_video_0002.gif)
+
+### Road Segmentation using U-Net
+
+![figure_0001](/models/predicted-1.png)
+![figure_0002](/models/predicted-2.png)
 
 ## Team Members
 
