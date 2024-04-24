@@ -1,3 +1,6 @@
+# Trained Models
+*.bin
+
 # Prerequisites
 *.d
 
@@ -32,5 +35,6 @@
 *.app
 
 # Misc
-/build
 /.vscode
+/build
+/env
