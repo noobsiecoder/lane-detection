@@ -50,6 +50,8 @@ class Particle_filter():
         except:
             # print("probs: ", probs)
             probs = []
+            x0_list2 = []
+            x1_list2 = []
             
             print("reading: ", reading)
             print("\n----------\n")
@@ -61,13 +63,18 @@ class Particle_filter():
                 print("err0: ", err0)
                 print("err1: ", err1)
                 probs.append(err0 * err1)
-
+                x0_list2.append(particle[0])
+                x1_list2.append(particle[2])
                 y0 = particle[1]
                 y1 = particle[3]
                 pass
             # exit()
 
-            return []
+            x0 = int(np.median(np.array(x0_list2)))
+            x1 = int(np.median(np.array(x1_list2)))
+
+            return [x0, y0, x1, y1]
+            # return []
 
         x0_list = []
         x1_list = []
@@ -79,4 +86,7 @@ class Particle_filter():
         x0 = sum(x0_list) // len(x0_list)
         x1 = sum(x1_list) // len(x1_list)
         
+        # x0 = int(np.median(np.array(x0_list)))
+        # x1 = int(np.median(np.array(x1_list)))
+
         return [x0, y0, x1, y1]

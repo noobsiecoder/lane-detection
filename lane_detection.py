@@ -171,8 +171,8 @@ class lane_detec():
         estimate_l = []
         estimate_r = []
 
-        particle_filter_left = Particle_filter(900,900)
-        particle_filter_right = Particle_filter(900,800)
+        particle_filter_left = Particle_filter(90,90)
+        particle_filter_right = Particle_filter(50,50)
 
         video_capture = cv.VideoCapture(path)
         while video_capture.isOpened():
@@ -185,7 +185,7 @@ class lane_detec():
             roi_frame = define_region_of_interest1(canny_edges)
 
             # Getting the hough lines from the image
-            hough_lines = cv.HoughLinesP(roi_frame, 2, np.pi / 180, 100, np.array([]), minLineLength=50, maxLineGap=150)
+            hough_lines = cv.HoughLinesP(roi_frame, 2, np.pi / 180, 60, np.array([]), minLineLength=50, maxLineGap=150)
             dim = np.shape(frame)
             
             # Splitting the left and right lanes
@@ -215,7 +215,10 @@ class lane_detec():
 
                 left_lane_t1 = left_lane.copy()
                 left_lane_t2 = left_lane.copy()
+                left_lane_t3 = left_lane.copy()
                 left_lane = [x0, y0, x1, y1]
+
+                delta_l = 0
 
                 REFRESH_LEFT_LANE = False
 
@@ -241,31 +244,38 @@ class lane_detec():
                 
                 right_lane_t1 = right_lane.copy()
                 right_lane_t2 = right_lane.copy()
+                right_lane_t3 = right_lane.copy()
+
+                delta_r = 0
 
                 print("Median: ", right_lane)
                 # print("Closest: ", right_lane)
 
                 REFRESH_RIGHT_LANE = False
 
-            if len(left_lane_t1) > 0 and len(left_lane_t2) > 0:
-                delta_l = np.array(left_lane_t1) - np.array(left_lane_t2)
+            if len(left_lane_t1) > 0 and len(left_lane_t2) > 0 and len(left_lane_t3) > 0:
+                delta_l1 = np.array(left_lane_t1) - np.array(left_lane_t2)
+                delta_l2 = np.array(left_lane_t2) - np.array(left_lane_t3)
+                delta_l = delta_l + (delta_l1 - delta_l2)
                 estimate_l = np.array(left_lane_t1) + np.array(delta_l)
                 estimate_l = estimate_l.tolist()
             else:
                 estimate_l = left_lane.copy()
             
-            if len(right_lane_t1) > 0 and len(right_lane_t2) > 0:
-                delta_r = np.array(right_lane_t1) - np.array(right_lane_t2)
+            if len(right_lane_t1) > 0 and len(right_lane_t2) > 0 and len(right_lane_t3) > 0:
+                delta_r1 = np.array(right_lane_t1) - np.array(right_lane_t2)
+                delta_r2 = np.array(right_lane_t2) - np.array(right_lane_t3)
+                delta_r = delta_r + (delta_r1 - delta_r2)
                 estimate_r = np.array(right_lane_t1) + np.array(delta_r)
                 estimate_r = estimate_r.tolist()
             else:
                 estimate_r = right_lane.copy()
 
+            left_lane_t3 = left_lane_t2.copy()
             left_lane_t2 = left_lane_t1.copy()
-            # left_lane_t1 = left_lane.copy()
 
+            right_lane_t3 = right_lane_t2.copy()
             right_lane_t2 = right_lane_t1.copy()
-            # right_lane_t1 = right_lane.copy()
 
             """ The scoring function goes here"""
             left_lane = particle_filter_left.get_estimate(lanes_left, estimate_l)
@@ -291,7 +301,7 @@ class lane_detec():
             # combined_output = side_debug(frame, left_lane, right_lane)
             # combined_output = side_debug(frame, lanes_left, lanes_right)
             
-            cv.imshow("Lane Lines pf", combined_output)
+            cv.imshow("Lane Lines", combined_output)
 
             if cv.waitKey(10) & 0xFF == ord('q'):
                 break
@@ -300,4 +310,4 @@ class lane_detec():
         cv.destroyAllWindows()
 
 if __name__ == '__main__':
-    lane_detec(r"data\video\video3.mp4")
+    lane_detec(r"data\video\video1.mp4")
