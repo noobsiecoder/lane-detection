@@ -1,12 +1,17 @@
-# Lane Detection using Hough Transform
+# Lane Detection using Hough Transform and Road segmentation using U-Net
 
-This project is developed as the final project for the EECE5639 Computer Vision course, Spring 2024, at Northeastern University. The project focuses on detecting lanes in road images and videos using the Hough Transform algorithm. This README provides an overview of the project, its contents, and instructions for usage.
+This project is developed as the final project for the EECE5639 Computer Vision course, Spring 2024, at Northeastern University. The project focuses on detecting lanes in road images and videos using the Hough Transform algorithm and road segmentation using U-Net. This README provides an overview of the project, its contents, and instructions for usage.
 
 ## Demo
 
-![figure_0029](/samples/output_video_0029.gif)
-![figure_0027](/samples/output_video_0027.gif)
-![figure_0002](/samples/output_video_0002.gif)
+- Lane detection using Hough Transform
+  ![figure_0029](/samples/output_video_0029.gif)
+  ![figure_0027](/samples/output_video_0027.gif)
+  ![figure_0002](/samples/output_video_0002.gif)
+
+- Road Segmentation using U-Net
+  ![figure_0001](/models/predicted-1.png)
+  ![figure_0002](/models/predicted-2.png)
 
 ## Team Members
 
@@ -120,13 +125,14 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Acknowledgements
 
-We would like to express our gratitude to our instructor and teaching assistants for their guidance and support throughout the course. We would also like to thank the people behind the collection of the KITTI dataset.
+We would like to express our gratitude to our instructor and teaching assistants for their guidance and support throughout the course. We would also like to thank the people behind the collection of the KITTI dataset. Also, we would like to thank [Hossam emam](https://www.kaggle.com/hossamemamo) which helped us tremendously in our road segmentation work using U-Net.
 
 ## References
 
 - [KITTI dataset](https://www.cvlibs.net/datasets/kitti/index.php)
 - [OpenCV](https://opencv.org/)
 - [Advanced Lane Detection for Autonomous Vehicles using Computer Vision techniques by Raj Uppula](https://towardsdatascience.com/advanced-lane-detection-for-autonomous-vehicles-using-computer-vision-techniques-f229e4245e41)
--  [Simple Lane Detection with OpenCV by Matt Hardwick](https://medium.com/@mrhwick/simple-lane-detection-with-opencv-bfeb6ae54ec0)
+- [Simple Lane Detection with OpenCV by Matt Hardwick](https://medium.com/@mrhwick/simple-lane-detection-with-opencv-bfeb6ae54ec0)
 - [Akram et. al. Preprocessing Methods of Lane Detection and
   Tracking for Autonomous Driving](https://arxiv.org/pdf/2104.04755.pdf)
+- [KITTI-Road-Segmentation-Pytorch-UNET-From-Scratch](https://www.kaggle.com/code/hossamemamo/kitti-road-segmentation-pytorch-unet-from-scratch#Model-U-NET)
